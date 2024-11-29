@@ -10,7 +10,9 @@ PLAY_AREA_SIZE = WINDOW_SIZE - 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_W
 CELL_SIZE = PLAY_AREA_SIZE // GRID_SIZE  # Dimensione di ogni cella
 
 # Creazione della griglia
-grid = {(row, col): {"value": random.randint(1, 9), "dark": False} for row in range(GRID_SIZE) for col in range(GRID_SIZE)}
+# value = numero nella cella
+# state = "clear" (cella numerica, bianca), "dark" (cella oscuratra, nera), "adjacent" (celle oscurate adiacenti, rosso), "alone" (cella numerica isolata, rosso chiaro)
+grid = {(row, col): {"value": random.randint(1, 9), "state": "clear"} for row in range(GRID_SIZE) for col in range(GRID_SIZE)}
 
 def tick():
     g2d.clear_canvas()
@@ -35,8 +37,12 @@ def tick():
             y = DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + row * CELL_SIZE
 
             # Colore della cella in base al suo stato
-            if grid[(row, col)]["dark"]:
+            if grid[(row, col)]["state"] == "dark":
                 g2d.set_color((0, 0, 0))  # Oscurata: grigio
+            elif grid[(row, col)]["state"] == "alone":
+                g2d.set_color((150, 0, 0))
+            elif grid[(row, col)]["state"] == "adjacent":
+                g2d.set_color((255, 0, 0))
             else:
                 g2d.set_color((255, 255, 255))  # Normale: bianco
             g2d.draw_rect((x, y), (CELL_SIZE, CELL_SIZE))
@@ -67,7 +73,37 @@ def tick():
         col = (mouse_x - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         row = (mouse_y - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         if 0 <= col < GRID_SIZE and 0 <= row < GRID_SIZE:
-            grid[(row, col)]["dark"] = not grid[(row, col)]["dark"]
+            grid[(row, col)]["state"] = "dark" if grid[(row, col)]["state"] == "clear" else "clear"
+        check_adjacent(row, col)
+
+#Controllo che le celle nere non siano adiacenti verticalmente o orizzontalmente
+def check_adjacent(row, col):
+    if grid[(row, col)]["state"] == "dark":
+        if row > 0 and (grid[(row - 1, col)]["state"] == "dark" or grid[(row - 1, col)]["state"] == "adjacent"):
+            grid[((row, col))]["state"] = "adjacent"
+            check_adjacent(row - 1, col)
+        if row < GRID_SIZE - 1 and (grid[(row + 1, col)]["state"] == "dark" or grid[(row + 1, col)]["state"] == "adjacent"):
+            grid[(row, col)]["state"] = "adjacent"
+            check_adjacent(row + 1, col)
+        if col > 0 and (grid[(row, col - 1)]["state"] == "dark" or grid[(row, col - 1)]["state"] == "adjacent"):
+            grid[(row, col)]["state"] = "adjacent"
+            check_adjacent(row, col - 1)
+        if col < GRID_SIZE - 1 and (grid[(row, col + 1)]["state"] == "dark" or grid[(row, col + 1)]["state"] == "adjacent"):
+            grid[(row, col)]["state"] = "adjacent"
+            check_adjacent(row, col + 1)
+    elif grid[(row, col)]["state"] == "clear":
+        if row > 0 and grid[(row - 1, col)]["state"] == "adjacent":
+            grid [(row-1, col)]["state"] = "dark"
+            check_adjacent(row - 1, col)
+        if row < GRID_SIZE - 1 and grid[(row + 1, col)]["state"] == "adjacent":
+            grid [(row+1, col)]["state"] = "dark"
+            check_adjacent(row + 1, col)
+        if col > 0 and grid[(row, col - 1)]["state"] == "adjacent":
+            grid [(row, col-1)]["state"] = "dark"
+            check_adjacent(row, col - 1)
+        if col < GRID_SIZE - 1 and grid[(row, col + 1)]["state"] == "adjacent":
+            grid [(row, col+1)]["state"] = "dark"
+            check_adjacent(row, col + 1)
 
 def main():
     g2d.init_canvas((WINDOW_SIZE, WINDOW_SIZE))
