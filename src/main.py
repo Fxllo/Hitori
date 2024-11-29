@@ -9,11 +9,8 @@ SEPARATOR_BORDER_WIDTH = 5  # Spessore del bordo nero tra decorazione e campo
 PLAY_AREA_SIZE = WINDOW_SIZE - 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)  # Area di gioco
 CELL_SIZE = PLAY_AREA_SIZE // GRID_SIZE  # Dimensione di ogni cella
 
-# Creazione della matrice con numeri casuali
-grid = [[random.randint(1, GRID_SIZE) for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-
-# Matrice per lo stato delle celle (0 = normale, 1 = oscurata)
-state = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+# Creazione della griglia
+grid = {(row, col): {"value": random.randint(1, 9), "dark": False} for row in range(GRID_SIZE) for col in range(GRID_SIZE)}
 
 def tick():
     g2d.clear_canvas()
@@ -38,15 +35,15 @@ def tick():
             y = DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + row * CELL_SIZE
 
             # Colore della cella in base al suo stato
-            if state[row][col] == 0:
-                g2d.set_color((255, 255, 255))  # Normale: bianco
-            elif state[row][col] == 1:
+            if grid[(row, col)]["dark"]:
                 g2d.set_color((0, 0, 0))  # Oscurata: grigio
+            else:
+                g2d.set_color((255, 255, 255))  # Normale: bianco
             g2d.draw_rect((x, y), (CELL_SIZE, CELL_SIZE))
             
             # Disegna il numero al centro della cella
             g2d.set_color((0, 0, 0))
-            g2d.draw_text(str(grid[row][col]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
+            g2d.draw_text(str(grid[(row, col)]["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
     
     # Disegna le linee della griglia
     g2d.set_color((0, 0, 0))  # Nero per le linee
@@ -70,7 +67,7 @@ def tick():
         col = (mouse_x - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         row = (mouse_y - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         if 0 <= col < GRID_SIZE and 0 <= row < GRID_SIZE:
-            state[row][col] = 1 - state[row][col]  # Cambia stato della cella (oscura o normale)
+            grid[(row, col)]["dark"] = not grid[(row, col)]["dark"]
 
 def main():
     g2d.init_canvas((WINDOW_SIZE, WINDOW_SIZE))
