@@ -12,6 +12,7 @@ CLEAR_CELL_COLOR = (204, 204, 204)
 DARK_CELL_COLOR = (0, 0, 0)
 ALONE_CELL_COLOR = (255, 204, 204)
 ADJAENT_CELL_COLOR = (255, 0, 0)
+CIRCLE_CELL_COLOR = (0, 255, 0)
 
 class HitoriGui:
     def __init__(self, game: BoardGame):
@@ -25,7 +26,7 @@ class HitoriGui:
         self._error = False
         self._errorArea = False
         self._game_finished = False
-        self._grid = {(row, col): {"value": game._numbers[row * self._cols + col], "state": "clear"} 
+        self._grid = {(row, col): {"value": game._numbers[row * self._cols + col], "state": "clear", "buffer": False} 
               for row in range(self._rows) for col in range(self._cols)}
 
     def tick(self):
@@ -50,16 +51,16 @@ class HitoriGui:
                     g2d.set_color(ALONE_CELL_COLOR)
                 elif cell["state"] == "adjacent":
                     g2d.set_color(ADJAENT_CELL_COLOR)
+                elif cell["state"] == "circle":
+                    g2d.set_color(CIRCLE_CELL_COLOR)
                 else:
                     g2d.set_color(CLEAR_CELL_COLOR)
-                    
+                
                 g2d.draw_rect((x, y), (CELL_SIZE, CELL_SIZE))
-                if cell["state"] == "adjacent":
-                    g2d.set_color((255, 255, 255))
-                    g2d.draw_text(str(cell["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 25)
-                else:
-                    g2d.set_color((0, 0, 0))
-                    g2d.draw_text(str(cell["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
+
+                g2d.set_color((255, 255, 255) if cell["state"] in ["dark", "adjacent"] else (0, 0, 0))
+                g2d.draw_text(str(cell["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
+                g2d.draw_text(str(cell["state"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2 + 10), 20)
 
         g2d.set_color((0, 0, 0))
         PLAY_AREA_SIZE = self._width - 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
@@ -79,7 +80,9 @@ class HitoriGui:
 
         if g2d.mouse_clicked():
             row, col = self.get_mouse_cell()
+            print(f"Prima di play: {self._grid[(row, col)]['state']}")
             self._game.play(row, col, self._grid)
+            print(f"Dopo play: {self._grid[(row, col)]['state']}")
             self.check_adjacent(row, col)
             self.closedAreas()
         elif g2d.key_pressed("Escape"):
