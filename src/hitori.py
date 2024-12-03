@@ -1,9 +1,9 @@
 from boardgame import BoardGame
 
 class Hitori(BoardGame):
-    def __init__(self, filename="hitori.csv"):
-        self._w, self._h = 5, 5
+    def __init__(self, filename):
         self._numbers = self.load_matrix_from_csv(filename)
+        self._w = self._h = int(len(self._numbers) ** 0.5)
         self._annots = [0] * (self._w * self._h)
 
     def load_matrix_from_csv(self, filename):
@@ -48,7 +48,6 @@ class Hitori(BoardGame):
         return self._h
     
     def play(self, row: int, col: int, grid: dict):
-        
         if 0 <= col < self.cols() and 0 <= row < self.rows():
             cell = grid[(row, col)]
             if cell["state"] == "clear" or cell["state"] == "alone":
