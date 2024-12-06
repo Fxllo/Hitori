@@ -58,7 +58,7 @@ class HitoriGui:
                 
                 g2d.draw_rect((x, y), (CELL_SIZE, CELL_SIZE))
 
-                g2d.set_color((255, 255, 255) if cell["state"] in ["dark", "adjacent"] else (0, 0, 0))
+                g2d.set_color((0, 0, 0))
                 g2d.draw_text(str(cell["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
                 g2d.draw_text(str(cell["state"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2 + 10), 20)
 
@@ -93,14 +93,22 @@ class HitoriGui:
                 cell = self._grid[(row, col)]
                 if cell["state"] == "dark":
                     self.darken_adjacent_cells(row, col)
+                if cell["state"] == "circle":
+                    self.cicleSameNumber(row, col)
             self.check_adjacent(row, col)
             self.closedAreas()
                 
-            if self._game_finished:
-                self.display_status()
-                g2d.main_loop(None)
-            if self._game.finished(self.wrong()):
-                self._game_finished = True
+        if self._game_finished:
+            self.display_status()
+            g2d.alert("Hai finito il gioco!")
+            g2d.main_loop(None)
+        else:
+            self.display_status()
+        if self._game.finished(self.wrong()):
+            self._game_finished = True
+        else:
+            print("Non hai ancora finito il gioco")
+            self._game_finished = False
         
     def wrong(self):
         return self._error or self._errorArea
@@ -188,6 +196,9 @@ class HitoriGui:
             nr, nc = row + dr, col + dc
             if self.is_within_grid(nr, nc):
                 self._grid[(nr, nc)]["state"] = "dark"
+    
+    def cicleSameNumber(self, row, col):
+        pass
 
 def gui_play(game: BoardGame):
     gui = HitoriGui(game)

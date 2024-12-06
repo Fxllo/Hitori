@@ -14,7 +14,7 @@ def main():
     
     while True:
         try:
-            level = int(prompt("Enter difficulty: "))
+            level = int(prompt("Enter difficulty: (5, 6, 8, 9, 12, 15) "))
             if level in levelNames:
                 level = "./src/hitoriTables/" + levelNames[level]
                 break
