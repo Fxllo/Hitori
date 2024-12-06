@@ -19,15 +19,13 @@ class HitoriGui:
         self._game = game
         self._cols = game.cols()
         self._rows = game.rows()
+        self._grid_size = game.grid_size()
         self._width = self._cols * W + 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
         self._height = self._rows * H + 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
-        self._grid_size = max(self._cols, self._rows)
         g2d.init_canvas((self._width, self._height + status_rect_height))
         self._error = False
         self._errorArea = False
         self._game_finished = False
-        self._grid = {(row, col): {"value": game._numbers[row * self._cols + col], "state": "clear", "buffer": False} 
-              for row in range(self._rows) for col in range(self._cols)}
 
     def tick(self):
         g2d.clear_canvas()
@@ -44,7 +42,7 @@ class HitoriGui:
             for col in range(self._cols):
                 x = DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + col * CELL_SIZE
                 y = DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + row * CELL_SIZE
-                cell = self._grid[(row, col)]
+                cell = self._game.grid()[(row, col)]
                 if cell["state"] == "dark":
                     g2d.set_color(DARK_CELL_COLOR)
                 elif cell["state"] == "alone":
@@ -78,23 +76,7 @@ class HitoriGui:
 
         self.display_status()
 
-        if g2d.mouse_clicked():
-            row, col = self.get_mouse_cell()
-            self._game.play(row, col, self._grid)
-            self.check_adjacent(row, col)
-            self.closedAreas()
-        elif g2d.key_pressed("Escape"):
-            g2d.close_canvas()
-        elif g2d.mouse_right_clicked():
-            row, col = self.get_mouse_cell()
-            if self.is_within_grid(row, col):
-                cell = self._grid[(row, col)]
-                if cell["state"] == "dark":
-                    self.darken_adjacent_cells(row, col)
-                if cell["state"] == "circle":
-                    self.cicleSameNumber(row, col)
-            self.check_adjacent(row, col)
-            self.closedAreas()
+        self._game.play(self)
                 
         if self._game_finished:
             self.display_status()
@@ -110,68 +92,6 @@ class HitoriGui:
     def wrong(self):
         return self._error or self._errorArea
         
-    def check_adjacent(self, row, col):
-        if self._grid[(row, col)]["state"] == "dark":
-            if row > 0 and (self._grid[(row - 1, col)]["state"] == "dark" or self._grid[(row - 1, col)]["state"] == "adjacent"):
-                self._grid[((row, col))]["state"] = "adjacent"
-                self._error = True
-                self.check_adjacent(row - 1, col)
-            if row < self._grid_size - 1 and (self._grid[(row + 1, col)]["state"] == "dark" or self._grid[(row + 1, col)]["state"] == "adjacent"):
-                self._grid[(row, col)]["state"] = "adjacent"
-                self._error = True
-                self.check_adjacent(row + 1, col)
-            if col > 0 and (self._grid[(row, col - 1)]["state"] == "dark" or self._grid[(row, col - 1)]["state"] == "adjacent"):
-                self._grid[(row, col)]["state"] = "adjacent"
-                self._error = True
-                self.check_adjacent(row, col - 1)
-            if col < self._grid_size - 1 and (self._grid[(row, col + 1)]["state"] == "dark" or self._grid[(row, col + 1)]["state"] == "adjacent"):
-                self._grid[(row, col)]["state"] = "adjacent"
-                self._error = True
-                self.check_adjacent(row, col + 1)
-        elif self._grid[(row, col)]["state"] == "clear":
-            if row > 0 and self._grid[(row - 1, col)]["state"] == "adjacent":
-                self._grid [(row-1, col)]["state"] = "dark"
-                self._error = False
-                self.check_adjacent(row - 1, col)
-            if row < self._grid_size - 1 and self._grid[(row + 1, col)]["state"] == "adjacent":
-                self._grid [(row+1, col)]["state"] = "dark"
-                self._error = False
-                self.check_adjacent(row + 1, col)
-            if col > 0 and self._grid[(row, col - 1)]["state"] == "adjacent":
-                self._grid [(row, col-1)]["state"] = "dark"
-                self._error = False
-                self.check_adjacent(row, col - 1)
-            if col < self._grid_size - 1 and self._grid[(row, col + 1)]["state"] == "adjacent":
-                self._grid [(row, col+1)]["state"] = "dark"
-                self._error = False
-                self.check_adjacent(row, col + 1)
-
-    def closedAreas(self):
-        visited = set()
-        non_dark_cells = {(row, col) for row in range(self._grid_size) for col in range(self._grid_size) 
-                        if not (self._grid[(row, col)]["state"] == "dark" or self._grid[(row, col)]["state"] == "adjacent")}
-        if not non_dark_cells:
-            return
-        stack = [next(iter(non_dark_cells))]
-        while stack:
-            cell = stack.pop()
-            if cell not in visited:
-                visited.add(cell)
-                row, col = cell
-                for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    nr, nc = row + dr, col + dc
-                    if (nr, nc) in non_dark_cells and (nr, nc) not in visited:
-                        stack.append((nr, nc))
-        if non_dark_cells - visited:
-            self._errorArea = True
-        else:
-            self._errorArea = False
-
-        for c in non_dark_cells - visited:
-            self._grid[c]["state"] = "alone"
-        for c in visited:
-            self._grid[c]["state"] = "clear" if self._grid[c]["state"] == "alone" else self._grid[c]["state"]
-
     def display_status(self):
         status_text = self._game.status(self.wrong())
         g2d.set_color((204, 204, 204))
