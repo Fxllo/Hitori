@@ -1,18 +1,28 @@
 from boardgame import BoardGame
+import g2d
+from gui import HitoriGui
 
 class Hitori(BoardGame):
     def __init__(self, filename):
+        self._grid = {}
         self._numbers = self.load_matrix_from_csv(filename)
         self._w = self._h = int(len(self._numbers) ** 0.5)
+        self._grid_size = max(self.cols(), self.rows())
         self._annots = [0] * (self._w * self._h)
+
 
     def load_matrix_from_csv(self, filename):
         matrix = []
         with open(filename, mode='r') as file:
             import csv
             reader = csv.reader(file)
+            y = 0
             for row in reader:
-                matrix.extend([int(x) for x in row])
+                for x in range(len(row)):
+                    matrix.extend([int(row[x])])
+                    self._grid[(x, y)] = {"value": int(row[x]), "state": "clear"}
+                    print(row, x, y)
+                y += 1
         return matrix
 
     def finished(self, wrong: bool) -> bool:
@@ -61,6 +71,108 @@ class Hitori(BoardGame):
                     cell["state"] = "clear"
                     self._annots[row * self.cols() + col] = 0
             grid[(row, col)]["state"] = cell["state"]
+
+    def grid_size(self):
+        return self._grid_size
+    
+    def play(self, gui: HitoriGui):
+        if g2d.mouse_clicked():
+            row, col = gui.get_mouse_cell()
+            if 0 <= col < self.cols() and 0 <= row < self.rows():
+                cell = self._grid[(row, col)]
+                print(f"Stato attuale della cella ({row}, {col}): {cell['state']}")
+                match cell["state"]:
+                    case "clear" | "alone":
+                        cell["state"] = "dark"
+                        self._annots[row * self.cols() + col] = 1
+                    case "dark":
+                        cell["state"] = "circle"
+                        self._annots[row * self.cols() + col] = 2
+                    case "circle" | "adjacent":
+                        cell["state"] = "clear"
+                        self._annots[row * self.cols() + col] = 0
+                        
+                self._grid[(row, col)]["state"] = cell["state"]
+                print(f"Cella ({row}, {col}) aggiornata a stato: {cell['state']}")
+                self.check_adjacent(row, col)
+                self.closedAreas()
+        elif g2d.key_pressed("Escape"):
+            g2d.close_canvas()
+        elif g2d.mouse_right_clicked():
+            row, col = gui.get_mouse_cell()
+            if gui.is_within_grid(row, col):
+                cell = self._grid[(row, col)]
+                if cell["state"] == "dark":
+                    gui.darken_adjacent_cells(row, col)
+                if cell["state"] == "circle":
+                    gui.cicleSameNumber(row, col)
+            self.check_adjacent(row, col)
+            self.closedAreas()
     
     def read(self, row: int, col: int) -> int:
         return self._numbers[row * self.cols() + col]
+    
+    def grid(self) -> dict:
+        return self._grid
+    
+    def check_adjacent(self, row, col):
+        if self._grid[(row, col)]["state"] == "dark":
+            if row > 0 and (self._grid[(row - 1, col)]["state"] == "dark" or self._grid[(row - 1, col)]["state"] == "adjacent"):
+                self._grid[((row, col))]["state"] = "adjacent"
+                self._error = True
+                self.check_adjacent(row - 1, col)
+            if row < self._grid_size - 1 and (self._grid[(row + 1, col)]["state"] == "dark" or self._grid[(row + 1, col)]["state"] == "adjacent"):
+                self._grid[(row, col)]["state"] = "adjacent"
+                self._error = True
+                self.check_adjacent(row + 1, col)
+            if col > 0 and (self._grid[(row, col - 1)]["state"] == "dark" or self._grid[(row, col - 1)]["state"] == "adjacent"):
+                self._grid[(row, col)]["state"] = "adjacent"
+                self._error = True
+                self.check_adjacent(row, col - 1)
+            if col < self._grid_size - 1 and (self._grid[(row, col + 1)]["state"] == "dark" or self._grid[(row, col + 1)]["state"] == "adjacent"):
+                self._grid[(row, col)]["state"] = "adjacent"
+                self._error = True
+                self.check_adjacent(row, col + 1)
+        elif self._grid[(row, col)]["state"] == "clear":
+            if row > 0 and self._grid[(row - 1, col)]["state"] == "adjacent":
+                self._grid [(row-1, col)]["state"] = "dark"
+                self._error = False
+                self.check_adjacent(row - 1, col)
+            if row < self._grid_size - 1 and self._grid[(row + 1, col)]["state"] == "adjacent":
+                self._grid [(row+1, col)]["state"] = "dark"
+                self._error = False
+                self.check_adjacent(row + 1, col)
+            if col > 0 and self._grid[(row, col - 1)]["state"] == "adjacent":
+                self._grid [(row, col-1)]["state"] = "dark"
+                self._error = False
+                self.check_adjacent(row, col - 1)
+            if col < self._grid_size - 1 and self._grid[(row, col + 1)]["state"] == "adjacent":
+                self._grid [(row, col+1)]["state"] = "dark"
+                self._error = False
+                self.check_adjacent(row, col + 1)
+
+    def closedAreas(self):
+        visited = set()
+        non_dark_cells = {(row, col) for row in range(self._grid_size) for col in range(self._grid_size) 
+                        if not (self._grid[(row, col)]["state"] == "dark" or self._grid[(row, col)]["state"] == "adjacent")}
+        if not non_dark_cells:
+            return
+        stack = [next(iter(non_dark_cells))]
+        while stack:
+            cell = stack.pop()
+            if cell not in visited:
+                visited.add(cell)
+                row, col = cell
+                for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    nr, nc = row + dr, col + dc
+                    if (nr, nc) in non_dark_cells and (nr, nc) not in visited:
+                        stack.append((nr, nc))
+        if non_dark_cells - visited:
+            self._errorArea = True
+        else:
+            self._errorArea = False
+
+        for c in non_dark_cells - visited:
+            self._grid[c]["state"] = "alone"
+        for c in visited:
+            self._grid[c]["state"] = "clear" if self._grid[c]["state"] == "alone" else self._grid[c]["state"]
