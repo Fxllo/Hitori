@@ -80,9 +80,7 @@ class HitoriGui:
 
         if g2d.mouse_clicked():
             row, col = self.get_mouse_cell()
-            print(f"Prima di play: {self._grid[(row, col)]['state']}")
             self._game.play(row, col, self._grid)
-            print(f"Dopo play: {self._grid[(row, col)]['state']}")
             self.check_adjacent(row, col)
             self.closedAreas()
         elif g2d.key_pressed("Escape"):
@@ -107,7 +105,6 @@ class HitoriGui:
         if self._game.finished(self.wrong()):
             self._game_finished = True
         else:
-            print("Non hai ancora finito il gioco")
             self._game_finished = False
         
     def wrong(self):
@@ -173,7 +170,7 @@ class HitoriGui:
         for c in non_dark_cells - visited:
             self._grid[c]["state"] = "alone"
         for c in visited:
-            self._grid[c]["state"] = "clear"
+            self._grid[c]["state"] = "clear" if self._grid[c]["state"] == "alone" else self._grid[c]["state"]
 
     def display_status(self):
         status_text = self._game.status(self.wrong())

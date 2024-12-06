@@ -51,18 +51,16 @@ class Hitori(BoardGame):
         if 0 <= col < self.cols() and 0 <= row < self.rows():
             cell = grid[(row, col)]
             print(f"Stato attuale della cella ({row}, {col}): {cell['state']}")
-            if cell["state"] == "clear" or cell["state"] == "alone":
-                cell["state"] = "dark"
-                self._annots[row * self.cols() + col] = 1
-            elif cell["state"] == "dark":
-                cell["state"] = "circle"
-                self._annots[row * self.cols() + col] = 2
-            elif cell["state"] == "circle":
-                cell["state"] = "clear"
-                self._annots[row * self.cols() + col] = 0
-            else:
-                cell["state"] = "clear"
-                self._annots[row * self.cols() + col] = 0
+            match cell["state"]:
+                case "clear" | "alone":
+                    cell["state"] = "dark"
+                    self._annots[row * self.cols() + col] = 1
+                case "dark":
+                    cell["state"] = "circle"
+                    self._annots[row * self.cols() + col] = 2
+                case "circle" | "adjacent":
+                    cell["state"] = "clear"
+                    self._annots[row * self.cols() + col] = 0
             grid[(row, col)]["state"] = cell["state"]
             print(f"Cella ({row}, {col}) aggiornata a stato: {cell['state']}")
     
