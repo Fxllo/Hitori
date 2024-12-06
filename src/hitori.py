@@ -50,7 +50,6 @@ class Hitori(BoardGame):
     def play(self, row: int, col: int, grid: dict):
         if 0 <= col < self.cols() and 0 <= row < self.rows():
             cell = grid[(row, col)]
-            print(f"Stato attuale della cella ({row}, {col}): {cell['state']}")
             match cell["state"]:
                 case "clear" | "alone":
                     cell["state"] = "dark"
@@ -62,7 +61,6 @@ class Hitori(BoardGame):
                     cell["state"] = "clear"
                     self._annots[row * self.cols() + col] = 0
             grid[(row, col)]["state"] = cell["state"]
-            print(f"Cella ({row}, {col}) aggiornata a stato: {cell['state']}")
     
     def read(self, row: int, col: int) -> int:
         return self._numbers[row * self.cols() + col]

@@ -51,16 +51,17 @@ class HitoriGui:
                     g2d.set_color(ALONE_CELL_COLOR)
                 elif cell["state"] == "adjacent":
                     g2d.set_color(ADJAENT_CELL_COLOR)
-                elif cell["state"] == "circle":
-                    g2d.set_color(CIRCLE_CELL_COLOR)
                 else:
                     g2d.set_color(CLEAR_CELL_COLOR)
                 
                 g2d.draw_rect((x, y), (CELL_SIZE, CELL_SIZE))
 
+                if cell["state"] == "circle":
+                    g2d.set_color(CIRCLE_CELL_COLOR)
+                    g2d.draw_circle((x + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+                
                 g2d.set_color((0, 0, 0))
                 g2d.draw_text(str(cell["value"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 20)
-                g2d.draw_text(str(cell["state"]), (x + CELL_SIZE // 2, y + CELL_SIZE // 2 + 10), 20)
 
         g2d.set_color((0, 0, 0))
         PLAY_AREA_SIZE = self._width - 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
@@ -85,6 +86,15 @@ class HitoriGui:
             self.closedAreas()
         elif g2d.key_pressed("Escape"):
             g2d.close_canvas()
+        elif g2d.key_pressed("h"):
+            row, col = self.get_mouse_cell()
+            cell = self._grid[(row, col)]
+            if cell["state"] == "dark":
+                self.darken_adjacent_cells(row, col)
+            elif cell["state"] == "circle":
+                self.circleSameNumber(row, col)
+            self.check_adjacent(row, col)
+            self.closedAreas()
         elif g2d.mouse_right_clicked():
             row, col = self.get_mouse_cell()
             if self.is_within_grid(row, col):
@@ -92,7 +102,7 @@ class HitoriGui:
                 if cell["state"] == "dark":
                     self.darken_adjacent_cells(row, col)
                 if cell["state"] == "circle":
-                    self.cicleSameNumber(row, col)
+                    self.circleSameNumber(row, col)
             self.check_adjacent(row, col)
             self.closedAreas()
                 
@@ -194,8 +204,14 @@ class HitoriGui:
             if self.is_within_grid(nr, nc):
                 self._grid[(nr, nc)]["state"] = "dark"
     
-    def cicleSameNumber(self, row, col):
-        pass
+    def circleSameNumber(self, row, col):
+        number = self._game.read(row, col)
+        for r in range(self._rows):
+            if r != row and self._grid[(r, col)]["value"] == number:
+                self._grid[(r, col)]["state"] = "dark"
+        for c in range(self._cols):
+            if c != col and self._grid[(row, c)]["value"] == number:
+                self._grid[(row, c)]["state"] = "dark"
 
 def gui_play(game: BoardGame):
     gui = HitoriGui(game)
