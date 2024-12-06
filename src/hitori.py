@@ -20,8 +20,7 @@ class Hitori(BoardGame):
             for row in reader:
                 for x in range(len(row)):
                     matrix.extend([int(row[x])])
-                    self._grid[(x, y)] = {"value": int(row[x]), "state": "clear"}
-                    print(row, x, y)
+                    self._grid[(y, x)] = {"value": int(row[x]), "state": "clear"}
                 y += 1
         return matrix
 
@@ -56,21 +55,6 @@ class Hitori(BoardGame):
 
     def rows(self):
         return self._h
-    
-    def play(self, row: int, col: int, grid: dict):
-        if 0 <= col < self.cols() and 0 <= row < self.rows():
-            cell = grid[(row, col)]
-            match cell["state"]:
-                case "clear" | "alone":
-                    cell["state"] = "dark"
-                    self._annots[row * self.cols() + col] = 1
-                case "dark":
-                    cell["state"] = "circle"
-                    self._annots[row * self.cols() + col] = 2
-                case "circle" | "adjacent":
-                    cell["state"] = "clear"
-                    self._annots[row * self.cols() + col] = 0
-            grid[(row, col)]["state"] = cell["state"]
 
     def grid_size(self):
         return self._grid_size
@@ -80,7 +64,6 @@ class Hitori(BoardGame):
             row, col = gui.get_mouse_cell()
             if 0 <= col < self.cols() and 0 <= row < self.rows():
                 cell = self._grid[(row, col)]
-                print(f"Stato attuale della cella ({row}, {col}): {cell['state']}")
                 match cell["state"]:
                     case "clear" | "alone":
                         cell["state"] = "dark"
@@ -93,19 +76,20 @@ class Hitori(BoardGame):
                         self._annots[row * self.cols() + col] = 0
                         
                 self._grid[(row, col)]["state"] = cell["state"]
-                print(f"Cella ({row}, {col}) aggiornata a stato: {cell['state']}")
                 self.check_adjacent(row, col)
                 self.closedAreas()
         elif g2d.key_pressed("Escape"):
             g2d.close_canvas()
+        elif g2d.key_pressed("h"):
+            g2d.alert("TEST")
         elif g2d.mouse_right_clicked():
             row, col = gui.get_mouse_cell()
-            if gui.is_within_grid(row, col):
+            if self.is_within_grid(row, col):
                 cell = self._grid[(row, col)]
                 if cell["state"] == "dark":
-                    gui.darken_adjacent_cells(row, col)
+                    self.darken_adjacent_cells(row, col)
                 if cell["state"] == "circle":
-                    gui.cicleSameNumber(row, col)
+                    self.circleSameNumber(row, col)
             self.check_adjacent(row, col)
             self.closedAreas()
     
@@ -176,3 +160,21 @@ class Hitori(BoardGame):
             self._grid[c]["state"] = "alone"
         for c in visited:
             self._grid[c]["state"] = "clear" if self._grid[c]["state"] == "alone" else self._grid[c]["state"]
+            
+    def darken_adjacent_cells(self, row, col):
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = row + dr, col + dc
+            if self.is_within_grid(nr, nc):
+                self._grid[(nr, nc)]["state"] = "dark"
+    
+    def circleSameNumber(self, row, col):
+        number = self.read(row, col)
+        for r in range(self.rows()):
+            if r != row and self._grid[(r, col)]["value"] == number:
+                self._grid[(r, col)]["state"] = "dark"
+        for c in range(self.cols()):
+            if c != col and self._grid[(row, c)]["value"] == number:
+                self._grid[(row, c)]["state"] = "dark"
+                
+    def is_within_grid(self, row, col):
+        return 0 <= col < self.cols() and 0 <= row < self.rows()

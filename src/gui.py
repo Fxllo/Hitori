@@ -105,24 +105,6 @@ class HitoriGui:
         col = (mouse_x - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         row = (mouse_y - DECORATIVE_BORDER_WIDTH - SEPARATOR_BORDER_WIDTH) // CELL_SIZE
         return row, col
-    
-    def is_within_grid(self, row, col):
-        return 0 <= col < self._cols and 0 <= row < self._rows
-    
-    def darken_adjacent_cells(self, row, col):
-        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            nr, nc = row + dr, col + dc
-            if self.is_within_grid(nr, nc):
-                self._grid[(nr, nc)]["state"] = "dark"
-    
-    def circleSameNumber(self, row, col):
-        number = self._game.read(row, col)
-        for r in range(self._rows):
-            if r != row and self._grid[(r, col)]["value"] == number:
-                self._grid[(r, col)]["state"] = "dark"
-        for c in range(self._cols):
-            if c != col and self._grid[(row, c)]["value"] == number:
-                self._grid[(row, c)]["state"] = "dark"
 
 def gui_play(game: BoardGame):
     gui = HitoriGui(game)
