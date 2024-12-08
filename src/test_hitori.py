@@ -3,7 +3,7 @@ from hitori import Hitori
 
 class TestHitori(unittest.TestCase):
     def setUp(self):
-        self.hitori = Hitori("hitori.csv")
+        self.hitori = Hitori("./src/hitoriTables/5-easy.csv")
 
     def test_no_repeated_numbers(self):
         """Verifica che non ci siano numeri ripetuti tra quelli non anneriti."""
