@@ -23,8 +23,6 @@ class HitoriGui:
         self._width = self._cols * W + 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
         self._height = self._rows * H + 2 * (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH)
         g2d.init_canvas((self._width, self._height + status_rect_height))
-        self._error = False
-        self._errorArea = False
         self._game_finished = False
 
     def tick(self):
@@ -85,16 +83,13 @@ class HitoriGui:
             g2d.main_loop(None)
         else:
             self.display_status()
-        if self._game.finished(self.wrong()):
+        if self._game.finished(self._game.wrong()):
             self._game_finished = True
         else:
             self._game_finished = False
         
-    def wrong(self):
-        return self._error or self._errorArea
-        
     def display_status(self):
-        status_text = self._game.status(self.wrong())
+        status_text = self._game.status(self._game.wrong())
         g2d.set_color((204, 204, 204))
         g2d.draw_rect((0, self._height), (self._width, status_rect_height))
         g2d.set_color((0, 0, 0))

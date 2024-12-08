@@ -9,6 +9,8 @@ class Hitori(BoardGame):
         self._w = self._h = int(len(self._numbers) ** 0.5)
         self._grid_size = max(self.cols(), self.rows())
         self._annots = [0] * (self._w * self._h)
+        self._error = False
+        self._errorArea = False
 
 
     def load_matrix_from_csv(self, filename):
@@ -58,6 +60,9 @@ class Hitori(BoardGame):
 
     def grid_size(self):
         return self._grid_size
+    
+    def wrong(self):
+        return self._error or self._errorArea
     
     def play(self, gui: HitoriGui):
         if g2d.mouse_clicked():
