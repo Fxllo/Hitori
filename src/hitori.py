@@ -1,5 +1,6 @@
 from boardgame import BoardGame
 import g2d
+import random
 from gui import HitoriGui
 
 class Hitori(BoardGame):
@@ -11,6 +12,7 @@ class Hitori(BoardGame):
         self._annots = [0] * (self._w * self._h)
         self._error = False
         self._errorArea = False
+        self._lastAction = None
 
 
     def load_matrix_from_csv(self, filename):
@@ -34,7 +36,7 @@ class Hitori(BoardGame):
         seen_col = [set() for _ in range(self._w)]
 
         for i in range(self._w * self._h):
-            if self._annots[i] == 0:
+            if self._annots[i] == 0 or self._annots[i] == 2:
                 number = self._numbers[i]
                 row = i // self._w
                 col = i % self._w
@@ -65,20 +67,22 @@ class Hitori(BoardGame):
         return self._error or self._errorArea
     
     def play(self, gui: HitoriGui):
+        rows = self.rows()
+        cols = self.cols()
         if g2d.mouse_clicked():
             row, col = gui.get_mouse_cell()
-            if 0 <= col < self.cols() and 0 <= row < self.rows():
+            if self.is_within_grid(row, col):
                 cell = self._grid[(row, col)]
                 match cell["state"]:
                     case "clear" | "alone":
                         cell["state"] = "dark"
-                        self._annots[row * self.cols() + col] = 1
+                        self._annots[row * cols + col] = 1
                     case "dark":
                         cell["state"] = "circle"
-                        self._annots[row * self.cols() + col] = 2
+                        self._annots[row * cols + col] = 2
                     case "circle" | "adjacent":
                         cell["state"] = "clear"
-                        self._annots[row * self.cols() + col] = 0
+                        self._annots[row * cols + col] = 0
                         
                 self._grid[(row, col)]["state"] = cell["state"]
                 self.check_adjacent(row, col)
@@ -86,16 +90,33 @@ class Hitori(BoardGame):
         elif g2d.key_pressed("Escape"):
             g2d.close_canvas()
         elif g2d.key_pressed("h"):
-            g2d.alert("TEST")
+            if self._lastAction == "dark":
+                for (row, col), data in self._grid.items():
+                    if data["state"] == "dark":
+                        self.darken_adjacent_cells(row, col)
+            elif self._lastAction == "circle":
+                for row in range(rows):
+                    for col in range(cols):
+                        if self._grid[(row, col)]["state"] == "circle":
+                            self.circleSameNumber(row, col)
+                for row in range(rows):
+                    for col in range(cols):
+                        self.check_adjacent(row, col)
+                self.closedAreas()
+        elif g2d.key_pressed("a"):
+            self.findNextMove()
         elif g2d.mouse_right_clicked():
             row, col = gui.get_mouse_cell()
             if self.is_within_grid(row, col):
                 cell = self._grid[(row, col)]
                 if cell["state"] == "dark":
                     self.darken_adjacent_cells(row, col)
-                if cell["state"] == "circle":
+                elif cell["state"] == "circle":
                     self.circleSameNumber(row, col)
-            self.check_adjacent(row, col)
+                for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)]:
+                    nr, nc = row + dr, col + dc
+                    if self.is_within_grid(nr, nc):
+                        self.check_adjacent(nr, nc)
             self.closedAreas()
     
     def read(self, row: int, col: int) -> int:
@@ -170,7 +191,8 @@ class Hitori(BoardGame):
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nr, nc = row + dr, col + dc
             if self.is_within_grid(nr, nc):
-                self._grid[(nr, nc)]["state"] = "dark"
+                self._grid[(nr, nc)]["state"] = "circle"
+        self._lastAction = "dark"
     
     def circleSameNumber(self, row, col):
         number = self.read(row, col)
@@ -180,6 +202,28 @@ class Hitori(BoardGame):
         for c in range(self.cols()):
             if c != col and self._grid[(row, c)]["value"] == number:
                 self._grid[(row, c)]["state"] = "dark"
+        self._lastAction = "circle"
                 
     def is_within_grid(self, row, col):
         return 0 <= col < self.cols() and 0 <= row < self.rows()
+    
+    def findNextMove(self):
+        available_cells = [(r, c) for r in range(self.rows()) for c in range(self.cols()) if self._grid[(r, c)]["state"] == "clear"]
+        if not available_cells:
+            return
+        row, col = random.choice(available_cells)
+        randMove = random.choice([0, 1])
+        if randMove:
+            self._grid[(row, col)]["state"] = "dark"
+            self.darken_adjacent_cells(row, col)
+            if self.wrong():
+                self._grid[(row, col)]["state"] = "circle"
+            self.check_adjacent(row, col)
+        else:
+            self._grid[(row, col)]["state"] = "circle"
+            self.circleSameNumber(row, col)
+            if self.wrong():
+                self._grid[(row, col)]["state"] = "dark"
+            self.check_adjacent(row, col)
+
+        self.closedAreas()

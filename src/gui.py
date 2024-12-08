@@ -72,21 +72,19 @@ class HitoriGui:
                 (DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + i * CELL_SIZE, DECORATIVE_BORDER_WIDTH + SEPARATOR_BORDER_WIDTH + PLAY_AREA_SIZE),
                 2
             )
-
-        self.display_status()
-
-        self._game.play(self)
                 
         if self._game_finished:
             self.display_status()
             g2d.alert("Hai finito il gioco!")
             g2d.main_loop(None)
-        else:
-            self.display_status()
+            return
+            
+        self._game.play(self)
+        
         if self._game.finished(self._game.wrong()):
             self._game_finished = True
-        else:
-            self._game_finished = False
+            
+        self.display_status()
         
     def display_status(self):
         status_text = self._game.status(self._game.wrong())

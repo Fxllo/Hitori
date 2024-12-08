@@ -160,7 +160,7 @@ def _mb_name(key: int) -> str:
 def _kb_name(key: int) -> str:
     fixes = {"up" : "ArrowUp", "down" : "ArrowDown",
              "right" : "ArrowRight", "left" : "ArrowLeft",
-             "space": "Spacebar", "return": "Enter", "H" : "h"}
+             "space": "Spacebar", "return": "Enter", "H" : "h", "A" : "a"}
     name = pg.key.name(key)
     if name in fixes:
         name = fixes[name]
