@@ -83,8 +83,6 @@ class Hitori(BoardGame):
                     case "circle" | "adjacent":
                         cell["state"] = "clear"
                         self._annots[row * cols + col] = 0
-                        
-                self._grid[(row, col)]["state"] = cell["state"]
                 self.check_adjacent(row, col)
                 self.closedAreas()
         elif g2d.key_pressed("Escape"):
@@ -227,3 +225,7 @@ class Hitori(BoardGame):
             self.check_adjacent(row, col)
 
         self.closedAreas()
+        
+    def testPlay(self, row, col):
+        self._grid[(row, col)]["state"] = "dark"
+        self._annots[row * self.cols() + col] = 1

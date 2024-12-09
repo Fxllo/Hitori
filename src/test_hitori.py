@@ -7,40 +7,45 @@ class TestHitori(unittest.TestCase):
 
     def test_no_repeated_numbers(self):
         """Verifica che non ci siano numeri ripetuti tra quelli non anneriti."""
-        self.hitori.play(0, 4, {"state": "dark"})
-        self.hitori.play(1, 1, {"state": "dark"})
-        self.hitori.play(1, 3, {"state": "dark"})
-        self.hitori.play(2, 0, {"state": "dark"})
-        self.hitori.play(3, 3, {"state": "dark"})
-        self.hitori.play(4, 0, {"state": "dark"})
-        self.hitori.play(4, 4, {"state": "dark"})
+        self.hitori.testPlay(0, 0)
+        self.hitori.testPlay(1, 1)
+        self.hitori.testPlay(4, 0)
+        self.hitori.testPlay(3, 1)
+        self.hitori.testPlay(3, 3)
+        self.hitori.testPlay(2, 4)
+        self.hitori.testPlay(0, 4)
 
-        self.assertTrue(self.hitori.finished(wrong=False))
+        wrong = self.hitori.wrong()
+        self.assertTrue(self.hitori.finished(wrong))
 
     def test_no_adjacent_dark_cells(self):
         """Verifica che non ci siano celle annerite adiacenti."""
-        self.hitori.play(0, 0, {"state": "dark"})
-        self.hitori.play(0, 1, {"state": "dark"})
-        self.assertFalse(self.hitori.finished(wrong=True))
+        self.hitori.testPlay(0, 0)
+        self.hitori.testPlay(0, 1)
+        
+        wrong = self.hitori.wrong()
+        self.assertFalse(self.hitori.finished(wrong))
 
     def test_contiguous_white_cells(self):
         """Verifica la contiguità delle celle bianche."""
-        self.hitori.play(0, 0, {"state": "dark"})  # Annerisce una cella
-        self.hitori.play(2, 2, {"state": "dark"})  # Annerisce una cella lontana
+        self.hitori.testPlay(0, 0)  # Annerisce una cella
+        self.hitori.testPlay(2, 2)  # Annerisce una cella lontana
 
-        self.assertFalse(self.hitori.finished(wrong=True))
+        wrong = self.hitori.wrong()
+        self.assertFalse(self.hitori.finished(wrong))
 
     def test_game_completion(self):
         """Verifica se il gioco è completato correttamente."""
-        self.hitori.play(0, 4, {"state": "dark"})
-        self.hitori.play(1, 1, {"state": "dark"})
-        self.hitori.play(1, 3, {"state": "dark"})
-        self.hitori.play(2, 0, {"state": "dark"})
-        self.hitori.play(3, 3, {"state": "dark"})
-        self.hitori.play(4, 0, {"state": "dark"})
-        self.hitori.play(4, 4, {"state": "dark"})
-        
-        self.assertEqual(self.hitori.status(wrong=False), "Completed!")
+        self.hitori.testPlay(0, 0)
+        self.hitori.testPlay(1, 1)
+        self.hitori.testPlay(4, 0)
+        self.hitori.testPlay(3, 1)
+        self.hitori.testPlay(3, 3)
+        self.hitori.testPlay(2, 4)
+        self.hitori.testPlay(0, 4)
+
+        wrong = self.hitori.wrong()
+        self.assertEqual(self.hitori.status(wrong), "Completed!")
 
     def test_read_function(self):
         """Verifica la funzione read."""
